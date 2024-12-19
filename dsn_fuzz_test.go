@@ -9,39 +9,47 @@ import (
 )
 
 func FuzzFormatDSN(f *testing.F) {
-	for _, test := range testDSNs { // See dsn_test.go
+	// testDSNs listesindeki her bir test için f.Add fonksiyonunu çağır
+	for _, test := range testDSNs { // dsn_test.go dosyasına bakın
 		f.Add(test.in)
 	}
 
+	// Fuzz fonksiyonunu çağır
+
 	f.Fuzz(func(t *testing.T, dsn1 string) {
-		// Do not waste resources
+		// Kaynakları boşa harcamayın
 		if len(dsn1) > 1000 {
-			t.Skip("ignore: too long")
+			t.Skip("yoksay: çok uzun")
 		}
 
+		// DSN'yi ayrıştır
 		cfg1, err := ParseDSN(dsn1)
 		if err != nil {
-			t.Skipf("invalid DSN: %v", err)
+			t.Skipf("geçersiz DSN: %v", err)
 		}
 
+		// DSN'yi formatla
 		dsn2 := cfg1.FormatDSN()
 		if dsn2 == dsn1 {
 			return
 		}
 
-		// Skip known cases of bad config that are not strictly checked by ParseDSN
+		// ParseDSN tarafından sıkı bir şekilde kontrol edilmeyen kötü yapılandırma durumlarını yoksay
 		if _, _, err := net.SplitHostPort(cfg1.Addr); err != nil {
-			t.Skipf("invalid addr %q: %v", cfg1.Addr, err)
+			t.Skipf("geçersiz adres %q: %v", cfg1.Addr, err)
 		}
 
+		// DSN'yi tekrar ayrıştır
 		cfg2, err := ParseDSN(dsn2)
 		if err != nil {
-			t.Fatalf("%q rewritten as %q: %v", dsn1, dsn2, err)
+			t.Fatalf("%q %q olarak yeniden yazıldı: %v", dsn1, dsn2, err)
 		}
 
+		// DSN'yi tekrar formatla
 		dsn3 := cfg2.FormatDSN()
 		if dsn3 != dsn2 {
-			t.Errorf("%q rewritten as %q", dsn2, dsn3)
+
+			t.Errorf("%q %q olarak yeniden yazıldı", dsn2, dsn3)
 		}
 	})
 }

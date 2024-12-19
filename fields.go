@@ -1,10 +1,9 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Sürücüsü - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2017 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2017 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Kamu Lisansı, v. 2.0 şartlarına tabidir.
+// MPL'nin bir kopyası bu dosya ile dağıtılmadıysa, http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
 
 package mysql
 
@@ -13,6 +12,7 @@ import (
 	"reflect"
 )
 
+// mysqlField türü için veritabanı adını döndüren fonksiyon
 func (mf *mysqlField) typeDatabaseName() string {
 	switch mf.fieldType {
 	case fieldTypeBit:
@@ -139,6 +139,7 @@ var (
 	scanTypeUnknown    = reflect.TypeOf(new(any))
 )
 
+// mysqlField yapısı
 type mysqlField struct {
 	tableName string
 	name      string
@@ -149,6 +150,7 @@ type mysqlField struct {
 	charSet   uint8
 }
 
+// mysqlField türü için tarama türünü döndüren fonksiyon
 func (mf *mysqlField) scanType() reflect.Type {
 	switch mf.fieldType {
 	case fieldTypeTiny:
@@ -214,8 +216,8 @@ func (mf *mysqlField) scanType() reflect.Type {
 
 	case fieldTypeDate, fieldTypeNewDate,
 		fieldTypeTimestamp, fieldTypeDateTime:
-		// NullTime is always returned for more consistent behavior as it can
-		// handle both cases of parseTime regardless if the field is nullable.
+		// NullTime her zaman daha tutarlı davranış için döndürülür çünkü
+		// parseTime durumunu, alanın boş olup olmadığına bakılmaksızın ele alabilir.
 		return scanTypeNullTime
 
 	default:

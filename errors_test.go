@@ -1,10 +1,9 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Sürücüsü - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2013 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2013 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Genel Kamu Lisansı, sürüm 2.0 şartlarına tabidir.
+// MPL'nin bir kopyası bu dosya ile dağıtılmadıysa, http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
 
 package mysql
 
@@ -15,47 +14,47 @@ import (
 	"testing"
 )
 
-func TestErrorsSetLogger(t *testing.T) {
-	previous := defaultLogger
+func TestHatalarLoggerAyarla(t *testing.T) {
+	onceki := defaultLogger
 	defer func() {
-		defaultLogger = previous
+		defaultLogger = onceki
 	}()
 
-	// set up logger
-	const expected = "prefix: test\n"
+	// logger kur
+	const beklenen = "ön ek: test\n"
 	buffer := bytes.NewBuffer(make([]byte, 0, 64))
-	logger := log.New(buffer, "prefix: ", 0)
+	logger := log.New(buffer, "ön ek: ", 0)
 
-	// print
+	// yazdır
 	SetLogger(logger)
 	defaultLogger.Print("test")
 
-	// check result
-	if actual := buffer.String(); actual != expected {
-		t.Errorf("expected %q, got %q", expected, actual)
+	// sonucu kontrol et
+	if gercek := buffer.String(); gercek != beklenen {
+		t.Errorf("beklenen %q, alınan %q", beklenen, gercek)
 	}
 }
 
-func TestErrorsStrictIgnoreNotes(t *testing.T) {
+func TestHatalarStrictIgnoreNotes(t *testing.T) {
 	runTests(t, dsn+"&sql_notes=false", func(dbt *DBTest) {
 		dbt.mustExec("DROP TABLE IF EXISTS does_not_exist")
 	})
 }
 
 func TestMySQLErrIs(t *testing.T) {
-	infraErr := &MySQLError{Number: 1234, Message: "the server is on fire"}
-	otherInfraErr := &MySQLError{Number: 1234, Message: "the datacenter is flooded"}
-	if !errors.Is(infraErr, otherInfraErr) {
-		t.Errorf("expected errors to be the same: %+v %+v", infraErr, otherInfraErr)
+	altYapiHatasi := &MySQLError{Number: 1234, Message: "sunucu yanıyor"}
+	digerAltYapiHatasi := &MySQLError{Number: 1234, Message: "veri merkezi su altında"}
+	if !errors.Is(altYapiHatasi, digerAltYapiHatasi) {
+		t.Errorf("hataların aynı olması bekleniyordu: %+v %+v", altYapiHatasi, digerAltYapiHatasi)
 	}
 
-	differentCodeErr := &MySQLError{Number: 5678, Message: "the server is on fire"}
-	if errors.Is(infraErr, differentCodeErr) {
-		t.Fatalf("expected errors to be different: %+v %+v", infraErr, differentCodeErr)
+	farkliKodHatasi := &MySQLError{Number: 5678, Message: "sunucu yanıyor"}
+	if errors.Is(altYapiHatasi, farkliKodHatasi) {
+		t.Fatalf("hataların farklı olması bekleniyordu: %+v %+v", altYapiHatasi, farkliKodHatasi)
 	}
 
-	nonMysqlErr := errors.New("not a mysql error")
-	if errors.Is(infraErr, nonMysqlErr) {
-		t.Fatalf("expected errors to be different: %+v %+v", infraErr, nonMysqlErr)
+	mysqlOlmayanHata := errors.New("mysql hatası değil")
+	if errors.Is(altYapiHatasi, mysqlOlmayanHata) {
+		t.Fatalf("hataların farklı olması bekleniyordu: %+v %+v", altYapiHatasi, mysqlOlmayanHata)
 	}
 }

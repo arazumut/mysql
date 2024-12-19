@@ -89,8 +89,10 @@ func TestAuthFastCachingSHA256PasswordCached(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	err = mc.writeHandshakeResponsePacket(authResp, plugin)
 	if err != nil {
+
 		t.Fatal(err)
 	}
 

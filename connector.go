@@ -1,10 +1,10 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Sürücüsü - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2018 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2018 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Public License, v. 2.0 şartlarına tabidir.
+// Bu dosya ile birlikte MPL'nin bir kopyası dağıtılmadıysa,
+// http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
 
 package mysql
 
@@ -18,14 +18,14 @@ import (
 )
 
 type connector struct {
-	cfg               *Config // immutable private copy.
-	encodedAttributes string  // Encoded connection attributes.
+	cfg               *Config // değiştirilemez özel kopya.
+	encodedAttributes string  // Kodlanmış bağlantı özellikleri.
 }
 
 func encodeConnectionAttributes(cfg *Config) string {
 	connAttrsBuf := make([]byte, 0)
 
-	// default connection attributes
+	// varsayılan bağlantı özellikleri
 	connAttrsBuf = appendLengthEncodedString(connAttrsBuf, connAttrClientName)
 	connAttrsBuf = appendLengthEncodedString(connAttrsBuf, connAttrClientNameValue)
 	connAttrsBuf = appendLengthEncodedString(connAttrsBuf, connAttrOS)
@@ -40,7 +40,7 @@ func encodeConnectionAttributes(cfg *Config) string {
 		connAttrsBuf = appendLengthEncodedString(connAttrsBuf, serverHost)
 	}
 
-	// user-defined connection attributes
+	// kullanıcı tanımlı bağlantı özellikleri
 	for _, connAttr := range strings.Split(cfg.ConnectionAttributes, ",") {
 		k, v, found := strings.Cut(connAttr, ":")
 		if !found {
@@ -61,12 +61,12 @@ func newConnector(cfg *Config) *connector {
 	}
 }
 
-// Connect implements driver.Connector interface.
-// Connect returns a connection to the database.
+// Connect, driver.Connector arayüzünü uygular.
+// Connect, veritabanına bir bağlantı döndürür.
 func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	var err error
 
-	// Invoke beforeConnect if present, with a copy of the configuration
+	// beforeConnect varsa çağır, yapılandırmanın bir kopyası ile
 	cfg := c.cfg
 	if c.cfg.beforeConnect != nil {
 		cfg = c.cfg.Clone()
@@ -76,7 +76,7 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 		}
 	}
 
-	// New mysqlConn
+	// Yeni mysqlConn oluştur
 	mc := &mysqlConn{
 		maxAllowedPacket: maxPacketSize,
 		maxWriteSize:     maxPacketSize - 1,
@@ -86,7 +86,7 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	}
 	mc.parseTime = mc.cfg.ParseTime
 
-	// Connect to Server
+	// Sunucuya Bağlan
 	dctx := ctx
 	if mc.cfg.Timeout > 0 {
 		var cancel context.CancelFunc
@@ -112,14 +112,14 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	}
 	mc.rawConn = mc.netConn
 
-	// Enable TCP Keepalives on TCP connections
+	// TCP bağlantılarında TCP Keepalives etkinleştir
 	if tc, ok := mc.netConn.(*net.TCPConn); ok {
 		if err := tc.SetKeepAlive(true); err != nil {
 			c.cfg.Logger.Print(err)
 		}
 	}
 
-	// Call startWatcher for context support (From Go 1.8)
+	// context desteği için startWatcher çağır (Go 1.8'den itibaren)
 	mc.startWatcher()
 	if err := mc.watchCancel(ctx); err != nil {
 		mc.cleanup()
@@ -129,11 +129,11 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 
 	mc.buf = newBuffer(mc.netConn)
 
-	// Set I/O timeouts
+	// G/Ç zaman aşımı ayarları
 	mc.buf.timeout = mc.cfg.ReadTimeout
 	mc.writeTimeout = mc.cfg.WriteTimeout
 
-	// Reading Handshake Initialization Packet
+	// Handshake Initialization Packet okuma
 	authData, plugin, err := mc.readHandshakePacket()
 	if err != nil {
 		mc.cleanup()
@@ -144,11 +144,11 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 		plugin = defaultAuthPlugin
 	}
 
-	// Send Client Authentication Packet
+	// İstemci Kimlik Doğrulama Paketi Gönder
 	authResp, err := mc.auth(authData, plugin)
 	if err != nil {
-		// try the default auth plugin, if using the requested plugin failed
-		c.cfg.Logger.Print("could not use requested auth plugin '"+plugin+"': ", err.Error())
+		// istenen eklentiyi kullanmak başarısız olursa varsayılan kimlik doğrulama eklentisini dene
+		c.cfg.Logger.Print("istenen kimlik doğrulama eklentisi '"+plugin+"' kullanılamadı: ", err.Error())
 		plugin = defaultAuthPlugin
 		authResp, err = mc.auth(authData, plugin)
 		if err != nil {
@@ -161,11 +161,11 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 		return nil, err
 	}
 
-	// Handle response to auth packet, switch methods if possible
+	// kimlik doğrulama paketine yanıtı işle, mümkünse yöntemleri değiştir
 	if err = mc.handleAuthResult(authData, plugin); err != nil {
-		// Authentication failed and MySQL has already closed the connection
+		// Kimlik doğrulama başarısız oldu ve MySQL bağlantıyı zaten kapattı
 		// (https://dev.mysql.com/doc/internals/en/authentication-fails.html).
-		// Do not send COM_QUIT, just cleanup and return the error.
+		// COM_QUIT göndermeyin, sadece temizleyin ve hatayı döndürün.
 		mc.cleanup()
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	if mc.cfg.MaxAllowedPacket > 0 {
 		mc.maxAllowedPacket = mc.cfg.MaxAllowedPacket
 	} else {
-		// Get max allowed packet size
+		// maksimum izin verilen paket boyutunu al
 		maxap, err := mc.getSystemVar("max_allowed_packet")
 		if err != nil {
 			mc.Close()
@@ -188,7 +188,7 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	// Charset: character_set_connection, character_set_client, character_set_results
 	if len(mc.cfg.charsets) > 0 {
 		for _, cs := range mc.cfg.charsets {
-			// ignore errors here - a charset may not exist
+			// burada hataları yoksay - bir karakter seti mevcut olmayabilir
 			if mc.cfg.Collation != "" {
 				err = mc.exec("SET NAMES " + cs + " COLLATE " + mc.cfg.Collation)
 			} else {
@@ -204,7 +204,7 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 		}
 	}
 
-	// Handle DSN Params
+	// DSN Parametrelerini İşle
 	err = mc.handleParams()
 	if err != nil {
 		mc.Close()
@@ -214,8 +214,8 @@ func (c *connector) Connect(ctx context.Context) (driver.Conn, error) {
 	return mc, nil
 }
 
-// Driver implements driver.Connector interface.
-// Driver returns &MySQLDriver{}.
+// Driver, driver.Connector arayüzünü uygular.
+// Driver, &MySQLDriver{} döndürür.
 func (c *connector) Driver() driver.Driver {
 	return &MySQLDriver{}
 }
