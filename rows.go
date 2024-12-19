@@ -1,10 +1,9 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Sürücüsü - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2012 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2012 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Genel Kamu Lisansı, sürüm 2.0 şartlarına tabidir.
+// Bu dosya ile birlikte MPL'nin bir kopyası dağıtılmadıysa, http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
 
 package mysql
 
@@ -63,10 +62,6 @@ func (rows *mysqlRows) ColumnTypeDatabaseTypeName(i int) string {
 	return rows.rs.columns[i].typeDatabaseName()
 }
 
-// func (rows *mysqlRows) ColumnTypeLength(i int) (length int64, ok bool) {
-// 	return int64(rows.rs.columns[i].length), true
-// }
-
 func (rows *mysqlRows) ColumnTypeNullable(i int) (nullable, ok bool) {
 	return rows.rs.columns[i].flags&flagNotNULL == 0, true
 }
@@ -111,7 +106,7 @@ func (rows *mysqlRows) Close() (err error) {
 		return err
 	}
 
-	// Remove unread packets from stream
+	// Okunmamış paketleri akıştan çıkar
 	if !rows.rs.done {
 		err = mc.readUntilEOF()
 	}
@@ -126,7 +121,7 @@ func (rows *mysqlRows) Close() (err error) {
 	return err
 }
 
-func (rows *mysqlRows) HasNextResultSet() (b bool) {
+func (rows *mysqlRows) HasNextResultSet() bool {
 	if rows.mc == nil {
 		return false
 	}
@@ -141,7 +136,7 @@ func (rows *mysqlRows) nextResultSet() (int, error) {
 		return 0, err
 	}
 
-	// Remove unread packets from stream
+	// Okunmamış paketleri akıştan çıkar
 	if !rows.rs.done {
 		if err := rows.mc.readUntilEOF(); err != nil {
 			return 0, err
@@ -154,11 +149,10 @@ func (rows *mysqlRows) nextResultSet() (int, error) {
 		return 0, io.EOF
 	}
 	rows.rs = resultSet{}
-	// rows.mc.affectedRows and rows.mc.insertIds accumulate on each call to
-	// nextResultSet.
+	// rows.mc.affectedRows ve rows.mc.insertIds her nextResultSet çağrısında birikir.
 	resLen, err := rows.mc.resultUnchanged().readResultSetHeaderPacket()
 	if err != nil {
-		// Clean up about multi-results flag
+		// Çoklu sonuçlar bayrağı hakkında temizleme yap
 		rows.rs.done = true
 		rows.mc.status = rows.mc.status & (^statusMoreResultsExists)
 	}
@@ -196,13 +190,13 @@ func (rows *binaryRows) Next(dest []driver.Value) error {
 			return err
 		}
 
-		// Fetch next row from stream
+		// Akıştan bir sonraki satırı al
 		return rows.readRow(dest)
 	}
 	return io.EOF
 }
 
-func (rows *textRows) NextResultSet() (err error) {
+func (rows *textRows) NextResultSet() error {
 	resLen, err := rows.nextNotEmptyResultSet()
 	if err != nil {
 		return err
@@ -218,7 +212,7 @@ func (rows *textRows) Next(dest []driver.Value) error {
 			return err
 		}
 
-		// Fetch next row from stream
+		// Akıştan bir sonraki satırı al
 		return rows.readRow(dest)
 	}
 	return io.EOF

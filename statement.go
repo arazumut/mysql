@@ -1,10 +1,10 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Sürücüsü - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2012 The Go-MySQL-Driver Authors. All rights reserved.
+// 2012 Go-MySQL-Driver Yazarlarının Tüm Hakları Saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Genel Kamu Lisansı, v. 2.0 şartlarına tabidir.
+// Bu dosya ile birlikte MPL'nin bir kopyası dağıtılmadıysa,
+// http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
 
 package mysql
 
@@ -24,11 +24,11 @@ type mysqlStmt struct {
 
 func (stmt *mysqlStmt) Close() error {
 	if stmt.mc == nil || stmt.mc.closed.Load() {
-		// driver.Stmt.Close could be called more than once, thus this function
-		// had to be idempotent. See also Issue #450 and golang/go#16019.
-		// This bug has been fixed in Go 1.8.
+		// driver.Stmt.Close birden fazla kez çağrılabilir, bu nedenle bu fonksiyon
+		// idempotent olmalıdır. Ayrıca Bkz. Issue #450 ve golang/go#16019.
+		// Bu hata Go 1.8'de düzeltildi.
 		// https://github.com/golang/go/commit/90b8a0ca2d0b565c7c7199ffcf77b15ea6b6db3a
-		// But we keep this function idempotent because it is safer.
+		// Ancak bu fonksiyonu idempotent tutmak daha güvenlidir.
 		return nil
 	}
 
@@ -54,7 +54,7 @@ func (stmt *mysqlStmt) Exec(args []driver.Value) (driver.Result, error) {
 	if stmt.mc.closed.Load() {
 		return nil, driver.ErrBadConn
 	}
-	// Send command
+	// Komutu gönder
 	err := stmt.writeExecutePacket(args)
 	if err != nil {
 		return nil, stmt.mc.markBadConn(err)
@@ -63,19 +63,19 @@ func (stmt *mysqlStmt) Exec(args []driver.Value) (driver.Result, error) {
 	mc := stmt.mc
 	handleOk := stmt.mc.clearResult()
 
-	// Read Result
+	// Sonucu Oku
 	resLen, err := handleOk.readResultSetHeaderPacket()
 	if err != nil {
 		return nil, err
 	}
 
 	if resLen > 0 {
-		// Columns
+		// Sütunlar
 		if err = mc.readUntilEOF(); err != nil {
 			return nil, err
 		}
 
-		// Rows
+		// Satırlar
 		if err := mc.readUntilEOF(); err != nil {
 			return nil, err
 		}
@@ -97,7 +97,7 @@ func (stmt *mysqlStmt) query(args []driver.Value) (*binaryRows, error) {
 	if stmt.mc.closed.Load() {
 		return nil, driver.ErrBadConn
 	}
-	// Send command
+	// Komutu gönder
 	err := stmt.writeExecutePacket(args)
 	if err != nil {
 		return nil, stmt.mc.markBadConn(err)
@@ -105,7 +105,7 @@ func (stmt *mysqlStmt) query(args []driver.Value) (*binaryRows, error) {
 
 	mc := stmt.mc
 
-	// Read Result
+	// Sonucu Oku
 	handleOk := stmt.mc.clearResult()
 	resLen, err := handleOk.readResultSetHeaderPacket()
 	if err != nil {
@@ -135,11 +135,10 @@ var jsonType = reflect.TypeOf(json.RawMessage{})
 
 type converter struct{}
 
-// ConvertValue mirrors the reference/default converter in database/sql/driver
-// with _one_ exception.  We support uint64 with their high bit and the default
-// implementation does not.  This function should be kept in sync with
-// database/sql/driver defaultConverter.ConvertValue() except for that
-// deliberate difference.
+// ConvertValue, database/sql/driver'daki referans/varsayılan dönüştürücüyü
+// bir _istisna_ ile yansıtır. Yüksek biti olan uint64'ü destekleriz ve varsayılan
+// implementasyon bunu yapmaz. Bu fonksiyon, deliberate fark dışında
+// database/sql/driver defaultConverter.ConvertValue() ile senkronize tutulmalıdır.
 func (c converter) ConvertValue(v any) (driver.Value, error) {
 	if driver.IsValue(v) {
 		return v, nil
@@ -153,18 +152,16 @@ func (c converter) ConvertValue(v any) (driver.Value, error) {
 		if driver.IsValue(sv) {
 			return sv, nil
 		}
-		// A value returned from the Valuer interface can be "a type handled by
-		// a database driver's NamedValueChecker interface" so we should accept
-		// uint64 here as well.
+		// Valuer arayüzünden dönen bir değer, "bir veritabanı sürücüsünün NamedValueChecker arayüzü tarafından işlenen bir tür" olabilir, bu yüzden burada uint64'ü de kabul etmeliyiz.
 		if u, ok := sv.(uint64); ok {
 			return u, nil
 		}
-		return nil, fmt.Errorf("non-Value type %T returned from Value", sv)
+		return nil, fmt.Errorf("Value arayüzünden dönen geçersiz tür %T", sv)
 	}
 	rv := reflect.ValueOf(v)
 	switch rv.Kind() {
 	case reflect.Ptr:
-		// indirect pointers
+		// pointerları dolaylı olarak işleme
 		if rv.IsNil() {
 			return nil, nil
 		} else {
@@ -185,27 +182,25 @@ func (c converter) ConvertValue(v any) (driver.Value, error) {
 		case t.Elem().Kind() == reflect.Uint8:
 			return rv.Bytes(), nil
 		default:
-			return nil, fmt.Errorf("unsupported type %T, a slice of %s", v, t.Elem().Kind())
+			return nil, fmt.Errorf("desteklenmeyen tür %T, %s dilim", v, t.Elem().Kind())
 		}
 	case reflect.String:
 		return rv.String(), nil
 	}
-	return nil, fmt.Errorf("unsupported type %T, a %s", v, rv.Kind())
+	return nil, fmt.Errorf("desteklenmeyen tür %T, %s", v, rv.Kind())
 }
 
 var valuerReflectType = reflect.TypeOf((*driver.Valuer)(nil)).Elem()
 
-// callValuerValue returns vr.Value(), with one exception:
-// If vr.Value is an auto-generated method on a pointer type and the
-// pointer is nil, it would panic at runtime in the panicwrap
-// method. Treat it like nil instead.
+// callValuerValue, vr.Value()'ı döndürür, bir istisna ile:
+// Eğer vr.Value bir pointer türünde otomatik oluşturulmuş bir metodsa ve
+// pointer nil ise, panicwrap metodunda çalışma zamanında panik yapar.
+// Bunu nil olarak kabul edin.
 //
-// This is so people can implement driver.Value on value types and
-// still use nil pointers to those types to mean nil/NULL, just like
-// string/*string.
+// Bu, insanlar değer türlerinde driver.Value uygulayabilsinler ve
+// bu türlerin nil pointerlarını nil/NULL anlamına gelecek şekilde kullanabilsinler diye yapılmıştır, tıpkı string/*string gibi.
 //
-// This is an exact copy of the same-named unexported function from the
-// database/sql package.
+// Bu, database/sql paketindeki aynı isimli dışa kapalı fonksiyonun tam bir kopyasıdır.
 func callValuerValue(vr driver.Valuer) (v driver.Value, err error) {
 	if rv := reflect.ValueOf(vr); rv.Kind() == reflect.Ptr &&
 		rv.IsNil() &&
