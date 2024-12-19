@@ -1,10 +1,10 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Sürücüsü - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2019 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2019 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Kamu Lisansı, sürüm 2.0 şartlarına tabidir.
+// MPL'nin bir kopyası bu dosya ile birlikte dağıtılmadıysa,
+// http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
 
 //go:build !linux && !darwin && !dragonfly && !freebsd && !netbsd && !openbsd && !solaris && !illumos
 // +build !linux,!darwin,!dragonfly,!freebsd,!netbsd,!openbsd,!solaris,!illumos

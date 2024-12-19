@@ -429,6 +429,7 @@ func TestInvalidDateTime(t *testing.T) {
 		str  string
 		want time.Time
 	}{
+
 		{
 			name: "parse datetime without day",
 			str:  "0000-00-00 21:30:45",

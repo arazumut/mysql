@@ -1,26 +1,25 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Driver - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2014 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2014 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Kamu Lisansı, v. 2.0 şartlarına tabidir. Bu dosya ile birlikte MPL'nin bir kopyası dağıtılmadıysa,
+// http://mozilla.org/MPL/2.0/ adresinden bir kopyasını edinebilirsiniz.
 
 package mysql
 
 const defaultCollationID = 45 // utf8mb4_general_ci
 const binaryCollationID = 63
 
-// A list of available collations mapped to the internal ID.
-// To update this map use the following MySQL query:
+// İç ID'ye eşlenen mevcut sıralama listesi.
+// Bu haritayı güncellemek için aşağıdaki MySQL sorgusunu kullanın:
 //
 //	SELECT COLLATION_NAME, ID FROM information_schema.COLLATIONS WHERE ID<256 ORDER BY ID
 //
-// Handshake packet have only 1 byte for collation_id.  So we can't use collations with ID > 255.
+// El sıkışma paketi yalnızca 1 bayt için sıralama_id'ye sahiptir. Bu yüzden ID > 255 olan sıralamaları kullanamayız.
 //
-// ucs2, utf16, and utf32 can't be used for connection charset.
+// ucs2, utf16 ve utf32 bağlantı karakter seti olarak kullanılamaz.
+// Bu haritayı azaltmak için yorum satırına alınmışlardır.
 // https://dev.mysql.com/doc/refman/5.7/en/charset-connection.html#charset-connection-impermissible-client-charset
-// They are commented out to reduce this map.
 var collations = map[string]byte{
 	"big5_chinese_ci":      1,
 	"latin2_czech_cs":      2,

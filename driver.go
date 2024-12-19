@@ -1,19 +1,19 @@
-// Copyright 2012 The Go-MySQL-Driver Authors. All rights reserved.
+// 2012 Go-MySQL-Driver Yazarlarının Telif Hakkı Saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Genel Kamu Lisansı, sürüm 2.0 şartlarına tabidir.
+// Bu dosya ile birlikte MPL'nin bir kopyası dağıtılmadıysa,
+// http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
 
-// Package mysql provides a MySQL driver for Go's database/sql package.
+// mysql paketi, Go'nun database/sql paketi için bir MySQL sürücüsü sağlar.
 //
-// The driver should be used via the database/sql package:
+// Sürücü, database/sql paketi aracılığıyla kullanılmalıdır:
 //
 //	import "database/sql"
 //	import _ "github.com/go-sql-driver/mysql"
 //
 //	db, err := sql.Open("mysql", "user:password@/dbname")
 //
-// See https://github.com/go-sql-driver/mysql#usage for details
+// Detaylar için https://github.com/go-sql-driver/mysql#usage adresine bakın
 package mysql
 
 import (
@@ -24,18 +24,18 @@ import (
 	"sync"
 )
 
-// MySQLDriver is exported to make the driver directly accessible.
-// In general the driver is used via the database/sql package.
+// MySQLDriver doğrudan erişilebilir hale getirmek için dışa aktarılmıştır.
+// Genel olarak sürücü, database/sql paketi aracılığıyla kullanılır.
 type MySQLDriver struct{}
 
-// DialFunc is a function which can be used to establish the network connection.
-// Custom dial functions must be registered with RegisterDial
+// DialFunc, ağ bağlantısını kurmak için kullanılabilecek bir işlevdir.
+// Özel arama işlevleri RegisterDial ile kaydedilmelidir.
 //
-// Deprecated: users should register a DialContextFunc instead
+// Kullanımdan kaldırıldı: kullanıcılar yerine DialContextFunc kaydetmelidir
 type DialFunc func(addr string) (net.Conn, error)
 
-// DialContextFunc is a function which can be used to establish the network connection.
-// Custom dial functions must be registered with RegisterDialContext
+// DialContextFunc, ağ bağlantısını kurmak için kullanılabilecek bir işlevdir.
+// Özel arama işlevleri RegisterDialContext ile kaydedilmelidir
 type DialContextFunc func(ctx context.Context, addr string) (net.Conn, error)
 
 var (
@@ -43,9 +43,8 @@ var (
 	dials     map[string]DialContextFunc
 )
 
-// RegisterDialContext registers a custom dial function. It can then be used by the
-// network address mynet(addr), where mynet is the registered new network.
-// The current context for the connection and its address is passed to the dial function.
+// RegisterDialContext, özel bir arama işlevi kaydeder. Daha sonra mynet(addr) ağ adresi ile kullanılabilir,
+// burada mynet, kaydedilen yeni ağdır. Bağlantı için geçerli bağlam ve adres arama işlevine geçirilir.
 func RegisterDialContext(net string, dial DialContextFunc) {
 	dialsLock.Lock()
 	defer dialsLock.Unlock()
@@ -55,7 +54,7 @@ func RegisterDialContext(net string, dial DialContextFunc) {
 	dials[net] = dial
 }
 
-// DeregisterDialContext removes the custom dial function registered with the given net.
+// DeregisterDialContext, verilen ağ ile kaydedilen özel arama işlevini kaldırır.
 func DeregisterDialContext(net string) {
 	dialsLock.Lock()
 	defer dialsLock.Unlock()
@@ -64,20 +63,18 @@ func DeregisterDialContext(net string) {
 	}
 }
 
-// RegisterDial registers a custom dial function. It can then be used by the
-// network address mynet(addr), where mynet is the registered new network.
-// addr is passed as a parameter to the dial function.
+// RegisterDial, özel bir arama işlevi kaydeder. Daha sonra mynet(addr) ağ adresi ile kullanılabilir,
+// burada mynet, kaydedilen yeni ağdır. addr, arama işlevine parametre olarak geçirilir.
 //
-// Deprecated: users should call RegisterDialContext instead
+// Kullanımdan kaldırıldı: kullanıcılar yerine RegisterDialContext çağırmalıdır
 func RegisterDial(network string, dial DialFunc) {
 	RegisterDialContext(network, func(_ context.Context, addr string) (net.Conn, error) {
 		return dial(addr)
 	})
 }
 
-// Open new Connection.
-// See https://github.com/go-sql-driver/mysql#dsn-data-source-name for how
-// the DSN string is formatted
+// Yeni Bağlantı Aç.
+// DSN dizesinin nasıl biçimlendirildiği hakkında bilgi için https://github.com/go-sql-driver/mysql#dsn-data-source-name adresine bakın
 func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 	cfg, err := ParseDSN(dsn)
 	if err != nil {
@@ -87,7 +84,7 @@ func (d MySQLDriver) Open(dsn string) (driver.Conn, error) {
 	return c.Connect(context.Background())
 }
 
-// This variable can be replaced with -ldflags like below:
+// Bu değişken -ldflags ile aşağıdaki gibi değiştirilebilir:
 // go build "-ldflags=-X github.com/go-sql-driver/mysql.driverName=custom"
 var driverName = "mysql"
 
@@ -97,18 +94,17 @@ func init() {
 	}
 }
 
-// NewConnector returns new driver.Connector.
+// NewConnector yeni driver.Connector döndürür.
 func NewConnector(cfg *Config) (driver.Connector, error) {
 	cfg = cfg.Clone()
-	// normalize the contents of cfg so calls to NewConnector have the same
-	// behavior as MySQLDriver.OpenConnector
+	// cfg'nin içeriğini normalize et, böylece NewConnector çağrıları MySQLDriver.OpenConnector ile aynı davranışa sahip olur
 	if err := cfg.normalize(); err != nil {
 		return nil, err
 	}
 	return newConnector(cfg), nil
 }
 
-// OpenConnector implements driver.DriverContext.
+// OpenConnector driver.DriverContext'i uygular.
 func (d MySQLDriver) OpenConnector(dsn string) (driver.Connector, error) {
 	cfg, err := ParseDSN(dsn)
 	if err != nil {

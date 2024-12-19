@@ -1,10 +1,10 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Driver - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2013 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2013 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Kamu Lisansı, v. 2.0 şartlarına tabidir.
+// Bu dosya ile birlikte MPL'nin bir kopyası dağıtılmadıysa,
+// http://mozilla.org/MPL/2.0/ adresinden bir kopyasını edinebilirsiniz.
 
 package mysql
 
@@ -17,19 +17,19 @@ import (
 const defaultBufSize = 4096
 const maxCachedBufSize = 256 * 1024
 
-// A buffer which is used for both reading and writing.
-// This is possible since communication on each connection is synchronous.
-// In other words, we can't write and read simultaneously on the same connection.
-// The buffer is similar to bufio.Reader / Writer but zero-copy-ish
-// Also highly optimized for this particular use case.
+// Hem okuma hem de yazma için kullanılan bir tampon.
+// Bu, her bağlantıdaki iletişimin senkron olması nedeniyle mümkündür.
+// Başka bir deyişle, aynı bağlantıda aynı anda yazma ve okuma yapamayız.
+// Tampon, bufio.Reader / Writer'a benzer ancak sıfır kopya benzeri
+// Ayrıca bu özel kullanım durumu için yüksek derecede optimize edilmiştir.
 type buffer struct {
-	buf       []byte // read buffer.
-	cachedBuf []byte // buffer that will be reused. len(cachedBuf) <= maxCachedBufSize.
+	buf       []byte // okuma tamponu.
+	cachedBuf []byte // yeniden kullanılacak tampon. len(cachedBuf) <= maxCachedBufSize.
 	nc        net.Conn
 	timeout   time.Duration
 }
 
-// newBuffer allocates and returns a new buffer.
+// newBuffer yeni bir tampon ayırır ve döndürür.
 func newBuffer(nc net.Conn) buffer {
 	return buffer{
 		cachedBuf: make([]byte, defaultBufSize),
@@ -37,29 +37,29 @@ func newBuffer(nc net.Conn) buffer {
 	}
 }
 
-// busy returns true if the read buffer is not empty.
+// busy okuma tamponu boş değilse true döner.
 func (b *buffer) busy() bool {
 	return len(b.buf) > 0
 }
 
-// fill reads into the read buffer until at least _need_ bytes are in it.
+// fill okuma tamponunu en az _need_ bayt olana kadar doldurur.
 func (b *buffer) fill(need int) error {
-	// we'll move the contents of the current buffer to dest before filling it.
+	// mevcut tamponun içeriğini doldurmadan önce dest'e taşıyacağız.
 	dest := b.cachedBuf
 
-	// grow buffer if necessary to fit the whole packet.
+	// tüm paketi sığdırmak için gerekirse tamponu büyütün.
 	if need > len(dest) {
-		// Round up to the next multiple of the default size
+		// Varsayılan boyutun bir sonraki katına yuvarlayın
 		dest = make([]byte, ((need/defaultBufSize)+1)*defaultBufSize)
 
-		// if the allocated buffer is not too large, move it to backing storage
-		// to prevent extra allocations on applications that perform large reads
+		// ayrılan tampon çok büyük değilse, ekstra tahsisleri önlemek için
+		// arka depolamaya taşıyın
 		if len(dest) <= maxCachedBufSize {
 			b.cachedBuf = dest
 		}
 	}
 
-	// move the existing data to the start of the buffer.
+	// mevcut verileri tamponun başlangıcına taşıyın.
 	n := len(b.buf)
 	copy(dest[:n], b.buf)
 
@@ -90,11 +90,11 @@ func (b *buffer) fill(need int) error {
 	}
 }
 
-// returns next N bytes from buffer.
-// The returned slice is only guaranteed to be valid until the next read
+// tampondan sonraki N baytı döndürür.
+// Döndürülen dilim, yalnızca bir sonraki okumaya kadar geçerli olacağı garanti edilir
 func (b *buffer) readNext(need int) ([]byte, error) {
 	if len(b.buf) < need {
-		// refill
+		// yeniden doldur
 		if err := b.fill(need); err != nil {
 			return nil, err
 		}
@@ -105,16 +105,16 @@ func (b *buffer) readNext(need int) ([]byte, error) {
 	return data, nil
 }
 
-// takeBuffer returns a buffer with the requested size.
-// If possible, a slice from the existing buffer is returned.
-// Otherwise a bigger buffer is made.
-// Only one buffer (total) can be used at a time.
+// istenen boyutta bir tampon döndürür.
+// Mümkünse, mevcut tampondan bir dilim döndürülür.
+// Aksi takdirde daha büyük bir tampon yapılır.
+// Aynı anda yalnızca bir tampon (toplam) kullanılabilir.
 func (b *buffer) takeBuffer(length int) ([]byte, error) {
 	if b.busy() {
 		return nil, ErrBusyBuffer
 	}
 
-	// test (cheap) general case first
+	// önce (ucuz) genel durumu test edin
 	if length <= len(b.cachedBuf) {
 		return b.cachedBuf[:length], nil
 	}
@@ -124,13 +124,13 @@ func (b *buffer) takeBuffer(length int) ([]byte, error) {
 		return b.cachedBuf, nil
 	}
 
-	// buffer is larger than we want to store.
+	// tampon saklamak istediğimizden daha büyük.
 	return make([]byte, length), nil
 }
 
-// takeSmallBuffer is shortcut which can be used if length is
-// known to be smaller than defaultBufSize.
-// Only one buffer (total) can be used at a time.
+// takeSmallBuffer, uzunluğun
+// varsayılanBufSize'dan küçük olduğu biliniyorsa kullanılabilecek bir kısayoldur.
+// Aynı anda yalnızca bir tampon (toplam) kullanılabilir.
 func (b *buffer) takeSmallBuffer(length int) ([]byte, error) {
 	if b.busy() {
 		return nil, ErrBusyBuffer
@@ -138,10 +138,10 @@ func (b *buffer) takeSmallBuffer(length int) ([]byte, error) {
 	return b.cachedBuf[:length], nil
 }
 
-// takeCompleteBuffer returns the complete existing buffer.
-// This can be used if the necessary buffer size is unknown.
-// cap and len of the returned buffer will be equal.
-// Only one buffer (total) can be used at a time.
+// takeCompleteBuffer mevcut tamponun tamamını döndürür.
+// Gerekli tampon boyutu bilinmiyorsa kullanılabilir.
+// Döndürülen tamponun kap ve uzunluğu eşit olacaktır.
+// Aynı anda yalnızca bir tampon (toplam) kullanılabilir.
 func (b *buffer) takeCompleteBuffer() ([]byte, error) {
 	if b.busy() {
 		return nil, ErrBusyBuffer
@@ -149,7 +149,7 @@ func (b *buffer) takeCompleteBuffer() ([]byte, error) {
 	return b.cachedBuf, nil
 }
 
-// store stores buf, an updated buffer, if its suitable to do so.
+// store, buf'u, güncellenmiş bir tamponu, uygun olduğu takdirde depolar.
 func (b *buffer) store(buf []byte) {
 	if cap(buf) <= maxCachedBufSize && cap(buf) > cap(b.cachedBuf) {
 		b.cachedBuf = buf[:cap(buf)]

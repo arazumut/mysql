@@ -1,10 +1,9 @@
-// Go MySQL Driver - A MySQL-Driver for Go's database/sql package
+// Go MySQL Sürücüsü - Go'nun database/sql paketi için bir MySQL Sürücüsü
 //
-// Copyright 2016 The Go-MySQL-Driver Authors. All rights reserved.
+// Telif Hakkı 2016 Go-MySQL-Driver Yazarlarına aittir. Tüm hakları saklıdır.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this file,
-// You can obtain one at http://mozilla.org/MPL/2.0/.
+// Bu Kaynak Kod Formu, Mozilla Kamu Lisansı, v. 2.0 şartlarına tabidir. Bu dosya ile birlikte bir MPL kopyası dağıtılmadıysa,
+// http://mozilla.org/MPL/2.0/ adresinden bir tane edinebilirsiniz.
 
 package mysql
 
@@ -28,12 +27,12 @@ func TestInterpolateParams(t *testing.T) {
 
 	q, err := mc.interpolateParams("SELECT ?+?", []driver.Value{int64(42), "gopher"})
 	if err != nil {
-		t.Errorf("Expected err=nil, got %#v", err)
+		t.Errorf("Beklenen err=nil, alınan %#v", err)
 		return
 	}
 	expected := `SELECT 42+'gopher'`
 	if q != expected {
-		t.Errorf("Expected: %q\nGot: %q", expected, q)
+		t.Errorf("Beklenen: %q\nAlınan: %q", expected, q)
 	}
 }
 
@@ -50,17 +49,17 @@ func TestInterpolateParamsJSONRawMessage(t *testing.T) {
 		Value int `json:"value"`
 	}{Value: 42})
 	if err != nil {
-		t.Errorf("Expected err=nil, got %#v", err)
+		t.Errorf("Beklenen err=nil, alınan %#v", err)
 		return
 	}
 	q, err := mc.interpolateParams("SELECT ?", []driver.Value{json.RawMessage(buf)})
 	if err != nil {
-		t.Errorf("Expected err=nil, got %#v", err)
+		t.Errorf("Beklenen err=nil, alınan %#v", err)
 		return
 	}
 	expected := `SELECT '{\"value\":42}'`
 	if q != expected {
-		t.Errorf("Expected: %q\nGot: %q", expected, q)
+		t.Errorf("Beklenen: %q\nAlınan: %q", expected, q)
 	}
 }
 
@@ -75,11 +74,11 @@ func TestInterpolateParamsTooManyPlaceholders(t *testing.T) {
 
 	q, err := mc.interpolateParams("SELECT ?+?", []driver.Value{int64(42)})
 	if err != driver.ErrSkip {
-		t.Errorf("Expected err=driver.ErrSkip, got err=%#v, q=%#v", err, q)
+		t.Errorf("Beklenen err=driver.ErrSkip, alınan err=%#v, q=%#v", err, q)
 	}
 }
 
-// We don't support placeholder in string literal for now.
+// Şu anda string literal içinde yer tutucu desteklemiyoruz.
 // https://github.com/go-sql-driver/mysql/pull/490
 func TestInterpolateParamsPlaceholderInString(t *testing.T) {
 	mc := &mysqlConn{
@@ -91,9 +90,9 @@ func TestInterpolateParamsPlaceholderInString(t *testing.T) {
 	}
 
 	q, err := mc.interpolateParams("SELECT 'abc?xyz',?", []driver.Value{int64(42)})
-	// When InterpolateParams support string literal, this should return `"SELECT 'abc?xyz', 42`
+	// InterpolateParams string literal'ı desteklediğinde, bu `"SELECT 'abc?xyz', 42` döndürmelidir.
 	if err != driver.ErrSkip {
-		t.Errorf("Expected err=driver.ErrSkip, got err=%#v, q=%#v", err, q)
+		t.Errorf("Beklenen err=driver.ErrSkip, alınan err=%#v, q=%#v", err, q)
 	}
 }
 
@@ -108,10 +107,10 @@ func TestInterpolateParamsUint64(t *testing.T) {
 
 	q, err := mc.interpolateParams("SELECT ?", []driver.Value{uint64(42)})
 	if err != nil {
-		t.Errorf("Expected err=nil, got err=%#v, q=%#v", err, q)
+		t.Errorf("Beklenen err=nil, alınan err=%#v, q=%#v", err, q)
 	}
 	if q != "SELECT 42" {
-		t.Errorf("Expected uint64 interpolation to work, got q=%#v", q)
+		t.Errorf("Beklenen uint64 interpolasyonu çalışmalı, alınan q=%#v", q)
 	}
 }
 
@@ -121,16 +120,16 @@ func TestCheckNamedValue(t *testing.T) {
 	err := mc.CheckNamedValue(&value)
 
 	if err != nil {
-		t.Fatal("uint64 high-bit not convertible", err)
+		t.Fatal("uint64 yüksek-bit dönüştürülemez", err)
 	}
 
 	if value.Value != ^uint64(0) {
-		t.Fatalf("uint64 high-bit converted, got %#v %T", value.Value, value.Value)
+		t.Fatalf("uint64 yüksek-bit dönüştürüldü, alınan %#v %T", value.Value, value.Value)
 	}
 }
 
-// TestCleanCancel tests passed context is cancelled at start.
-// No packet should be sent.  Connection should keep current status.
+// TestCleanCancel, başlangıçta iptal edilen bağlamı test eder.
+// Hiçbir paket gönderilmemelidir. Bağlantı mevcut durumu korumalıdır.
 func TestCleanCancel(t *testing.T) {
 	mc := &mysqlConn{
 		closech: make(chan struct{}),
@@ -141,18 +140,18 @@ func TestCleanCancel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	for i := 0; i < 3; i++ { // Repeat same behavior
+	for i := 0; i < 3; i++ { // Aynı davranışı tekrarla
 		err := mc.Ping(ctx)
 		if err != context.Canceled {
-			t.Errorf("expected context.Canceled, got %#v", err)
+			t.Errorf("beklenen context.Canceled, alınan %#v", err)
 		}
 
 		if mc.closed.Load() {
-			t.Error("expected mc is not closed, closed actually")
+			t.Error("beklenen mc kapalı değil, aslında kapalı")
 		}
 
 		if mc.watching {
-			t.Error("expected watching is false, but true")
+			t.Error("beklenen watching false, ama true")
 		}
 	}
 }
@@ -170,7 +169,7 @@ func TestPingMarkBadConnection(t *testing.T) {
 	err := mc.Ping(context.Background())
 
 	if err != driver.ErrBadConn {
-		t.Errorf("expected driver.ErrBadConn, got  %#v", err)
+		t.Errorf("beklenen driver.ErrBadConn, alınan  %#v", err)
 	}
 }
 
@@ -187,7 +186,7 @@ func TestPingErrInvalidConn(t *testing.T) {
 	err := mc.Ping(context.Background())
 
 	if err != nc.err {
-		t.Errorf("expected %#v, got  %#v", nc.err, err)
+		t.Errorf("beklenen %#v, alınan  %#v", nc.err, err)
 	}
 }
 
