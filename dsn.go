@@ -97,7 +97,6 @@ func NewConfig() *Config {
 	return cfg
 }
 
-// Apply applies the given options to the Config object.
 func (c *Config) Apply(opts ...Option) error {
 	for _, opt := range opts {
 		err := opt(c)
@@ -105,6 +104,7 @@ func (c *Config) Apply(opts ...Option) error {
 			return err
 		}
 	}
+
 	return nil
 }
 

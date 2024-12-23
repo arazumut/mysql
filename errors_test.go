@@ -20,7 +20,6 @@ func TestHatalarLoggerAyarla(t *testing.T) {
 		defaultLogger = onceki
 	}()
 
-	// logger kur
 	const beklenen = "ön ek: test\n"
 	buffer := bytes.NewBuffer(make([]byte, 0, 64))
 	logger := log.New(buffer, "ön ek: ", 0)

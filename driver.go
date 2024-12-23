@@ -1,19 +1,3 @@
-// 2012 Go-MySQL-Driver Yazarlarının Telif Hakkı Saklıdır.
-//
-// Bu Kaynak Kod Formu, Mozilla Genel Kamu Lisansı, sürüm 2.0 şartlarına tabidir.
-// Bu dosya ile birlikte MPL'nin bir kopyası dağıtılmadıysa,
-// http://mozilla.org/MPL/2.0/ adresinden edinebilirsiniz.
-
-// mysql paketi, Go'nun database/sql paketi için bir MySQL sürücüsü sağlar.
-//
-// Sürücü, database/sql paketi aracılığıyla kullanılmalıdır:
-//
-//	import "database/sql"
-//	import _ "github.com/go-sql-driver/mysql"
-//
-//	db, err := sql.Open("mysql", "user:password@/dbname")
-//
-// Detaylar için https://github.com/go-sql-driver/mysql#usage adresine bakın
 package mysql
 
 import (
@@ -45,21 +29,21 @@ var (
 
 // RegisterDialContext, özel bir arama işlevi kaydeder. Daha sonra mynet(addr) ağ adresi ile kullanılabilir,
 // burada mynet, kaydedilen yeni ağdır. Bağlantı için geçerli bağlam ve adres arama işlevine geçirilir.
-func RegisterDialContext(net string, dial DialContextFunc) {
+func RegisterDialContext(network string, dial DialContextFunc) {
 	dialsLock.Lock()
 	defer dialsLock.Unlock()
 	if dials == nil {
 		dials = make(map[string]DialContextFunc)
 	}
-	dials[net] = dial
+	dials[network] = dial
 }
 
 // DeregisterDialContext, verilen ağ ile kaydedilen özel arama işlevini kaldırır.
-func DeregisterDialContext(net string) {
+func DeregisterDialContext(network string) {
 	dialsLock.Lock()
 	defer dialsLock.Unlock()
 	if dials != nil {
-		delete(dials, net)
+		delete(dials, network)
 	}
 }
 

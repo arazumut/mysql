@@ -14,8 +14,6 @@ func FuzzFormatDSN(f *testing.F) {
 		f.Add(test.in)
 	}
 
-	// Fuzz fonksiyonunu çağır
-
 	f.Fuzz(func(t *testing.T, dsn1 string) {
 		// Kaynakları boşa harcamayın
 		if len(dsn1) > 1000 {

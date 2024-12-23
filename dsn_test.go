@@ -143,6 +143,7 @@ func TestDSNReformat(t *testing.T) {
 				t.Error(err.Error())
 				return
 			}
+
 			cfg2.TLS = nil // pointer not static
 			res2 := fmt.Sprintf("%+v", cfg2)
 
